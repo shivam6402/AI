@@ -1,0 +1,45 @@
+CREATE OR REPLACE TRIGGER after_insert
+AFTER INSERT
+ON library
+FOR EACH ROW
+BEGIN
+insert into lib1_audit values(:new.rollno,:new.name,:new.dateofissue,:new.nameofbook,:new.status,current_timestamp);
+END;
+/
+
+CREATE OR REPLACE TRIGGER after_update
+AFTER UPDATE
+ON library
+FOR EACH ROW
+BEGIN
+insert into lib1_audit values(:new.rollno,:new.name,:new.dateofissue,:new.nameofbook,:new.status,current_timestamp);
+END;
+/
+
+CREATE OR REPLACE TRIGGER after_delete
+AFTER DELETE
+ON library
+FOR EACH ROW
+BEGIN
+insert into lib1_audit values(:new.rollno,:new.name,:new.dateofissue,:new.nameofbook,:new.status,current_timestamp);
+END;
+/
+
+CREATE OR REPLACE TRIGGER AT1
+AFTER INSERT OR DELETE OR UPDATE
+ON lib2
+FOR EACH ROW
+BEGIN
+IF UPDATING THEN
+insert into lib2_audit values(:new.rollno,:new.name,:new.dateofissue,:new.nameofbook,:new.status,current_timestamp,'UPDATE');
+ELSIF INSERTING THEN
+insert into lib2_audit values(:new.rollno,:new.name,:new.dateofissue,:new.nameofbook,:new.status,current_timestamp,'INSERT');
+ELSIF DELETING THEN
+insert into lib2_audit values(:new.rollno,:new.name,:new.dateofissue,:new.nameofbook,:new.status,current_timestamp,'DELETE');
+END IF;
+END;
+/
+
+
+
+

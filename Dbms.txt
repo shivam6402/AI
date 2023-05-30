@@ -1,0 +1,75 @@
+CREATE OR REPLACE TRIGGER after_insert
+AFTER INSERT
+ON library
+FOR EACH ROW
+BEGIN
+insert into lib1_audit values(:new.rollno,:new.name,:new.dateofissue,:new.nameofbook,:new.status,current_timestamp);
+END;
+/
+
+CREATE OR REPLACE TRIGGER after_update
+AFTER UPDATE
+ON library
+FOR EACH ROW
+BEGIN
+insert into lib1_audit values(:new.rollno,:new.name,:new.dateofissue,:new.nameofbook,:new.status,current_timestamp);
+END;
+/
+
+CREATE OR REPLACE TRIGGER after_delete
+AFTER DELETE
+ON library
+FOR EACH ROW
+BEGIN
+insert into lib1_audit values(:new.rollno,:new.name,:new.dateofissue,:new.nameofbook,:new.status,current_timestamp);
+END;
+/
+
+CREATE OR REPLACE TRIGGER AT1
+AFTER INSERT OR DELETE OR UPDATE
+ON lib2
+FOR EACH ROW
+BEGIN
+IF UPDATING THEN
+insert into lib2_audit values(:new.rollno,:new.name,:new.dateofissue,:new.nameofbook,:new.status,current_timestamp,'UPDATE');
+ELSIF INSERTING THEN
+insert into lib2_audit values(:new.rollno,:new.name,:new.dateofissue,:new.nameofbook,:new.status,current_timestamp,'INSERT');
+ELSIF DELETING THEN
+insert into lib2_audit values(:new.rollno,:new.name,:new.dateofissue,:new.nameofbook,:new.status,current_timestamp,'DELETE');
+END IF;
+END;
+/
+
+
+declare
+p_nameofbook varchar2(10);
+p_rollno number(10);
+p_dateofissue date;
+currentdate date;
+noofdays number(2);
+amount number;
+nodata EXCEPTION;
+begin
+p_rollno:=&rollno;
+p_nameofbook:='&nameofbook';
+currentdate:=trunc(SYSDATE);
+if p_rollno<=0 then
+raise nodata;
+end if;
+select dateofissue into p_dateofissue from borrower1 where rollno=p_rollno and nameofbook=p_nameofbook;
+select trunc(SYSDATE)- p_dateofissue into noofdays from dual;
+dbms_output.put_line('No.of Days: '||noofdays);
+if(noofdays>30) then amount:=noofdays*50;
+elsif(noofdays>=15 and noofdays<=30) then amount:=noofdays*5;
+end if;
+if amount>0 then
+insert into fine2 values(p_rollno,sysdate,amount);
+end if;
+update borrower1 set status='R' where rollno=p_rollno;
+EXCEPTION
+when nodata then
+dbms_output.put_line('!!!Roll No not Found!!!!');
+end;
+/
+
+
